@@ -1,0 +1,179 @@
+Introduction to R
+========================================================
+(in just over one hour)
+----------------------------------
+### February 2014
+
+
+### 1. Basic R operation
+Note: If you are typing into an R script (and not directly to the console), `CTRL+Enter` will submit the current line of code or selection of code.
+```{r, highlight=TRUE, tidy=TRUE}
+#This is a comment. R ignores this
+```
+
+R can do simple arithmetic:
+```{r, highlight=TRUE, tidy=TRUE}
+2+2 #R ignores everything to hte right of the '#'
+```
+
+```{r, highlight=TRUE, tidy=TRUE}
+2*3
+```
+
+```{r, highlight=TRUE, tidy=TRUE}
+2/3
+```
+  
+You can assign data or functions to objects:
+```{r, highlight=TRUE, tidy=TRUE}
+x <- 2/3
+x
+```
+After creating the object `x`, it should appear in the environment pane in RStudio.
+  
+In most--but not all--cases, `<-` and `=` are equivalent
+```{r, highlight=TRUE, tidy=TRUE}
+x = 2/3
+x
+```
+  
+Tests of equality use `==` (note that `x` was already assigned a value of 2/3 from the previous step)
+```{r, highlight=TRUE, tidy=TRUE}
+x == 2/3
+```
+   
+As you would expect, your variables can be used in any other expression
+```{r, highlight=TRUE, tidy=TRUE}
+x * 6
+```
+
+#### Vectors store multiple values
+all elements of a vector need to be the same "type" (i.e., numeric or character/factor)
+use the `c` function to combine values into an array:
+```{r, highlight=TRUE, tidy=TRUE}
+y<-c(21,32,23,14,45)
+y
+```
+
+Accessing parts of a vector:
+```{r, highlight=TRUE, tidy=TRUE}
+y[1] #note that "1" is for position 1 (unlike some other languages)
+y[2:4] # use the colon (:) to refer to a range of elements
+```
+
+#### Functions perform tasks
+Many functions take a data object as input and perform a calculation. These are simple functions that help you inspect your data objects:
+```{r, highlight=TRUE, tidy=TRUE}
+#functions can do many things:
+length(y)
+class(y)
+is.numeric(y)
+```
+
+#### Missing values
+R represents missing values as `NA`, and it is best to explicitly account for missing data.
+```{r, highlight=TRUE, tidy=TRUE}
+b <- c(1,0,NA)
+b == 1
+is.na(b)
+!(is.na(b))
+is.finite(b)
+```
+
+### 2. Getting help
+Functions also perform (sometimes complex) statistical procedures, and R's built-in help system describes what functions do and how to use them. For example, type `?mean` to see the help page for `mean()`.
+
+A nice feature in RStudio is "tab completion".  If you begin to type the name of a data object or function, pressing tab will open a drop-down menu with all the objects that start with the letters you typed.
+
+You are also encouraged to use Google or other web searches; many people ask and answer questions on the internet, and someone might have answered your question already. Try searching for "Calculate quantiles in Rstats"
+
+### 3. Loading and examining a data set
+R can import many types of data formats. Use the correct function to load your data set.
+`read.table` and `read.csv` are popular for delimited text files. Otherwise, you might check out the `foreign`, `xlsx`, and `sas7bdat` packages.  In many situations, CSV is preferred.
+```{r, highlight=TRUE, tidy=TRUE}
+births<-read.csv("http://waisman.wisc.edu/~maenner/wi_birth_2004.csv")
+```
+
+You will often have data that is too large to manually inspect. There are several useful functions that will help you examine hte contents of your data set
+```{r, highlight=TRUE, tidy=TRUE}
+dim(births) #shows number of rows and columns
+str(births) #structure of object
+summary(births) # summary / overview
+colnames(births) #column names of dataframe
+head(births) #inspect first several rows
+```
+
+#### Accessing parts of a data frame
+
+There are numerous ways to reference parts of a data frame. We're going to focus on bracket notation (e.g., `df[ , ]`) and  `df$` .
+```{r, highlight=TRUE, tidy=TRUE}
+births[1:5 ,] #first five rows
+head(births[,1:5]) # first five columns, `head` function used so all 70000 don't print
+```
+
+Referring to variables:
+```{r, highlight=TRUE, tidy=TRUE, eval=FALSE}
+births$gestAge #try tab complete after the `$`
+births[ , 8] #references column number
+births[ , 'gestAge'] #references column name in bracket notation
+```
+
+Subsetting data:
+```{r, highlight=TRUE, tidy=TRUE, eval=FALSE}
+boys<-births[births$sex=="M",] # only males
+boys<-subset(births, sex== "M") # only males
+
+two_vars<-births[,c("momAge", "smoke")] # 2 columns
+two_vars<-subset(births, select=c("momAge","smoke")) # just these 2 columns
+```
+
+Let's look at the data again, so we can create a 'clean' dataset
+```{r, highlight=TRUE, tidy=TRUE}
+summary(births)
+table(births$gestAge)
+```
+
+
+Let's subset our data so it only has plausible and complete values for birthweight, maternal smoking, and gestational age
+```{r, highlight=TRUE, tidy=TRUE}
+births_complete<-births[ births$gestAge <50 &   
+                         births$birthweight < 7000 &   
+                         births$smoke < 3 &   
+                         is.finite(births$smoke),]
+```
+
+
+### 4. Packages and functions
+#### Download new packages from CRAN
+Getting new packages is a two step process--you first need to download the package from CRAN. (Only the first time you use it, or if you need to update that package).  Before you can use a package's functions in your R session, use the `library()` command to load that package.  Something to note: the package specified in `install.packages()` must be passed as a string, but `library()` will accept strings or non-strings.
+```{r, highlight=TRUE, tidy=TRUE, eval=FALSE}
+install.packages("deSolve", repos='http://cran.us.r-project.org') #specified repo for knitr
+library(deSolve)
+```
+
+Function names are followed by parentheses. If you only type the function name, it prints the function code.
+```{r, highlight=TRUE, tidy=TRUE, eval=FALSE}
+citation  #prints the code
+citation() #runs the function
+```
+
+Some common functions:
+```{r, highlight=TRUE, tidy=TRUE}
+table(births$marital, births$smoke)
+table(births$marital, births$smoke, useNA="always")
+aggregate(x=births_complete$smoke, by=list(births_complete$marital), FUN="mean")
+with(births_complete, aggregate(x=smoke, by=list(marital), FUN="mean"))
+with(births, chisq.test(table(sex, momRace)))
+```
+
+#### regression example
+Note that the output that is printed by default does not include the entire object that is generated by the function. 
+```{r, highlight=TRUE, tidy=TRUE}
+lm(birthweight~gestAge, data=births_complete)
+model<-lm(birthweight~gestAge, data=births_complete)
+summary(model)
+str(model)
+confint(model)
+plot(model)
+```
+
